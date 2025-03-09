@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <canvas id="myChart"></canvas>
+
+  <script>
+    var ctx = document.getElementById('myChart').getContext('2d');
+    var myChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Temperature (°C)',
+          data: [],
+          borderColor: 'blue',
+          fill: false
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: { 
+            type: 'time', 
+            time: { unit: 'minute' }, 
+            title: { display: true, text: 'Time' } 
+          },
+          y: { 
+            beginAtZero: false, 
+            title: { display: true, text: 'Temperature (°C)' } 
+          }
+        }
+      }
+    });
+
+    // 📌 5分ごとにデータを取得してグラフを更新
+    function updateChart() {
+      fetch('YOUR_GAS_WEB_APP_URL')  // Google Apps Script の Web アプリ URL を設定
+        .then(response => response.json())
+        .then(data => {
+          // 📌 最新の 278 個のデータだけ取得
+          var latestData = data.slice(-278);
+
+          // 📌 timestamp を適切なフォーマットに変換
+          var labels = latestData.map(d => new Date(d.timestamp).toLocaleTimeString());
+          var temperatures = latestData.map(d => d.temperature);
+
+          // 📌 Chart.js にデータを適用
+          myChart.data.labels = labels;
+          myChart.data.datasets[0].data = temperatures;
+          myChart.update();
+        })
+        .catch(error => console.error('Error fetching data:', error));
+    }
+
+    // 🔄 初回実行
+    updateChart();
+
+    // 🔄 5分ごとに自動更新（300000ミリ秒 = 5分）
+    setInterval(updateChart, 300000);
+  </script>
+</body>
+</html>
